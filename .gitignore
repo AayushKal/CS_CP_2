@@ -1,3 +1,8 @@
 .env
 chainvault.supervisor.conf
 chainvault.nginx.conf
+venv/
+__pycache__/
+*.pyc
+*.pyo
+chain_data.json

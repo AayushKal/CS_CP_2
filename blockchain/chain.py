@@ -13,7 +13,6 @@ DB_NAME    = "chainvault"
 _mongo_col = None
 
 def _get_col():
-    """Return the blocks collection, or None if MONGO_URI is not configured."""
     global _mongo_col
     if not MONGO_URI:
         return None
@@ -71,14 +70,12 @@ class Blockchain:
         if not self.chain:
             self._create_genesis()
 
-    # ── Genesis ───────────────────────────────────────────────────────────────
     def _create_genesis(self):
         g = Block(0, {"type": "GENESIS", "message": "Genesis Block"}, "0")
         g.mine()
         self.chain.append(g)
         self._save_block(g)
 
-    # ── Add record ────────────────────────────────────────────────────────────
     def add_record(self, data: dict) -> Block:
         block = Block(len(self.chain), data, self.chain[-1].hash)
         block.mine()
@@ -86,7 +83,13 @@ class Blockchain:
         self._save_block(block)
         return block
 
-    # ── Validation ────────────────────────────────────────────────────────────
+    def reset(self):
+        col = _get_col()
+        if col is not None:
+            col.delete_many({})
+        self.chain = []
+        self._create_genesis()
+
     def is_valid(self) -> bool:
         for i in range(1, len(self.chain)):
             cur  = self.chain[i]
@@ -97,7 +100,6 @@ class Blockchain:
                 return False
         return True
 
-    # ── Query helpers ─────────────────────────────────────────────────────────
     def get_file(self, file_id: str) -> dict | None:
         result = None
         for block in self.chain:
@@ -129,9 +131,7 @@ class Blockchain:
     def to_list(self) -> list:
         return [b.to_dict() for b in self.chain]
 
-    # ── Persistence (MongoDB) ─────────────────────────────────────────────────
     def _save_block(self, block: Block):
-        """Upsert one block document by index. No-op if MongoDB not configured."""
         col = _get_col()
         if col is None:
             return
@@ -139,10 +139,9 @@ class Blockchain:
         col.update_one({"index": block.index}, {"$set": doc}, upsert=True)
 
     def _load(self):
-        """Load entire chain from MongoDB on startup."""
         col = _get_col()
         if col is None:
-            return          # no DB — start fresh in memory
+            return
         try:
             docs = list(col.find({}, {"_id": 0}).sort("index", ASCENDING))
             self.chain = [Block(**d) for d in docs]

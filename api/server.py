@@ -313,15 +313,20 @@ def all_files():
 @app.route("/api/chain", methods=["GET"])
 @login_required
 def chain_info():
-    """
-    Called by the frontend every 5 seconds to poll chain status.
-    Also used by the browser-side chain validator to fetch blocks.
-    """
     return jsonify({
         "length":   len(bc.chain),
         "is_valid": bc.is_valid(),
         "blocks":   bc.to_list(),
     })
+
+
+# ── Admin API ─────────────────────────────────────────────────────────────────
+@app.route("/api/admin/reset-chain", methods=["POST"])
+@admin_required
+def reset_chain():
+    global bc
+    bc.reset()
+    return jsonify({"success": True, "message": "Chain reset to genesis block"})
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
