@@ -29,7 +29,7 @@ class Block:
     def __init__(self, index, data, previous_hash,
                  nonce=0, timestamp=None, hash=None):
         self.index         = index
-        self.timestamp     = timestamp or time.time()
+        self.timestamp     = timestamp or int(time.time())  # FIX: int to avoid float precision mismatch with JS
         self.data          = data
         self.previous_hash = previous_hash
         self.nonce         = nonce

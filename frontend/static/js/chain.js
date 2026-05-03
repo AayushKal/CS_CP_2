@@ -6,7 +6,6 @@
  *
  * Exported as a global object: BrowserChain
  */
-
 const BrowserChain = (() => {
   const DIFFICULTY     = 3;
   let   localChain     = [];
