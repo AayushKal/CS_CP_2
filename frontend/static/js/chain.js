@@ -8,14 +8,25 @@
  */
 
 const BrowserChain = (() => {
-  const DIFFICULTY    = 3;
-  let   localChain    = [];
+  const DIFFICULTY     = 3;
+  let   localChain     = [];
   let   validatedCount = 0;
+
+  /* ── Deep sort keys to match Python's json.dumps(sort_keys=True) */
+  function sortKeys(val) {
+    if (Array.isArray(val)) return val.map(sortKeys);
+    if (val !== null && typeof val === "object") {
+      return Object.keys(val).sort().reduce((acc, k) => {
+        acc[k] = sortKeys(val[k]);
+        return acc;
+      }, {});
+    }
+    return val;
+  }
 
   /* ── SHA-256 using native browser crypto ─────────────────────── */
   async function sha256(obj) {
-    // Must serialise with sorted keys to match Python's json.dumps(sort_keys=True)
-    const str  = JSON.stringify(obj, Object.keys(obj).sort());
+    const str  = JSON.stringify(sortKeys(obj));
     const buf  = new TextEncoder().encode(str);
     const hash = await crypto.subtle.digest("SHA-256", buf);
     return Array.from(new Uint8Array(hash))
@@ -35,12 +46,12 @@ const BrowserChain = (() => {
     if (computed !== block.hash) return false;
     if (!block.hash.startsWith("0".repeat(DIFFICULTY))) return false;
     return true;
-}
+  }
 
   /* ── Validate the entire chain ───────────────────────────────── */
   async function validateChain(chain) {
     for (let i = 1; i < chain.length; i++) {
-      if (!(await validateBlock(chain[i])))             return false;
+      if (!(await validateBlock(chain[i])))              return false;
       if (chain[i].previous_hash !== chain[i - 1].hash) return false;
     }
     return true;
@@ -55,7 +66,7 @@ const BrowserChain = (() => {
     return true;
   }
 
-  /* ── Receive a single new block from WebSocket broadcast ─────── */
+  /* ── Receive a single new block ──────────────────────────────── */
   async function receiveBlock(block) {
     const valid = await validateBlock(block);
     if (valid) {
