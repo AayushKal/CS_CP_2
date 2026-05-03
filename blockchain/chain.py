@@ -42,7 +42,7 @@ class Block:
             "data":          self.data,
             "previous_hash": self.previous_hash,
             "nonce":         self.nonce,
-        }, sort_keys=True)
+        }, sort_keys=True, separators=(',', ':'))  # FIX 2: no spaces, matches JS JSON.stringify exactly
         return hashlib.sha256(content.encode()).hexdigest()
 
     def mine(self):
