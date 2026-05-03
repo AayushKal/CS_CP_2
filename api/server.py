@@ -328,6 +328,17 @@ def reset_chain():
     bc.reset()
     return jsonify({"success": True, "message": "Chain reset to genesis block"})
 
+@app.route("/api/debug/chain", methods=["GET"])
+def debug_chain():
+    return jsonify([{
+        "index": b.index,
+        "timestamp": b.timestamp,
+        "timestamp_type": type(b.timestamp).__name__,
+        "hash": b.hash,
+        "computed": b.compute_hash(),
+        "match": b.hash == b.compute_hash()
+    } for b in bc.chain])
+
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
